@@ -2,14 +2,15 @@
   <v-app>
     <v-layout class="rounded rounded-md">
       <Navigation />
-      <Contents />
+      <Contents v-bind:textData="textData" />
     </v-layout>
   </v-app>
 </template>
 
 <script>
 import Navigation from "@/components/Navigation.vue";
-import Contents from "./components/Contents.vue";
+import Contents from "@/components/Contents.vue";
+import textData from "@/assets/textData.js";
 
 export default {
   name: "App",
@@ -19,8 +20,10 @@ export default {
     Navigation,
   },
 
-  data: () => ({
-    //
-  }),
+  data() {
+    return {
+      textData: textData,
+    };
+  },
 };
 </script>
