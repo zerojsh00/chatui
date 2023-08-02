@@ -1,18 +1,21 @@
 <template>
-  <div class="prompt">
-    <v-textarea
-      id="prompt_area"
-      prepend-inner-icon="mdi-comment"
-      append-inner-icon="mdi-send-circle"
-      clearable
-      clear-icon="mdi-close-circle"
-      variant="solo-filled"
-      auto-grow
-      label="메시지를 입력해주세요."
-      model-value="AWS (서울 리전)에서 vCPU 2개 이상을 가진 가상머신 스펙은 무엇인가요?"
-      @keyup.enter="submit"
-    ></v-textarea>
-  </div>
+  <v-textarea
+    id="prompt_area"
+    class="h-50 elevation-24"
+    ref="inputRef"
+    prepend-inner-icon="mdi-comment"
+    append-inner-icon="mdi-send-circle"
+    v-bind="{ loading: isLoading }"
+    clearable
+    clear-icon="mdi-close-circle"
+    variant="solo-filled"
+    rows="1"
+    row-height="1"
+    auto-grow
+    label="메시지를 입력해주세요."
+    model-value="안녕하세요"
+    @keyup.enter="submit"
+  ></v-textarea>
 </template>
 
 <script>
@@ -20,42 +23,46 @@ import axios from "axios";
 
 export default {
   name: "PromptComponent",
-  props: {
-    textData: Array,
+  data() {
+    return { isLoading: false };
   },
 
   methods: {
     async submit() {
-      let prompt_area = document.getElementById("prompt_area");
-      const text = prompt_area.value;
+      const prompt_area = document.getElementById("prompt_area");
+      const userInput = prompt_area.value.trim();
+      // prompt_area.value = "";
+      this.$refs.inputRef.reset();
+
       const apiKey = "";
       const endpoint = "https://api.openai.com/v1/chat/completions";
-      let result = "";
-      prompt_area.value = "";
 
-      try {
-        await axios
-          .post(
-            endpoint,
-            {
-              model: "gpt-3.5-turbo",
-              messages: [{ role: "user", content: text }],
-            },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${apiKey}`,
+      if (userInput.length > 0) {
+        try {
+          this.isLoading = true;
+          await axios
+            .post(
+              endpoint,
+              {
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: userInput }],
               },
-            }
-          )
-          .then((response) => {
-            result = response.data.choices[0].message.content;
-            // console.log(result);
-          });
-        this.textData.push(result);
-      } catch (error) {
-        console.error("Error : ", error);
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${apiKey}`,
+                },
+              }
+            )
+            .then((response) => {
+              const result = response.data.choices[0].message.content;
+              this.$emit("respResults", { query: userInput, resp: result });
+            });
+        } catch (error) {
+          console.error("Error : ", error);
+        }
       }
+      this.isLoading = false;
     },
   },
 };
@@ -64,5 +71,7 @@ export default {
 <style>
 #prompt_area {
   resize: none;
+  min-height: 5em;
+  max-height: 50vh;
 }
 </style>
