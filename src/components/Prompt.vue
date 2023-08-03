@@ -5,7 +5,7 @@
     ref="inputRef"
     prepend-inner-icon="mdi-comment"
     append-inner-icon="mdi-send-circle"
-    v-bind="{ loading: isLoading }"
+    v-bind="{ loading: isLoading, disabled: isGenerating }"
     clearable
     clear-icon="mdi-close-circle"
     variant="solo-filled"
@@ -14,7 +14,7 @@
     auto-grow
     label="메시지를 입력해주세요."
     model-value="안녕하세요"
-    @keyup.enter="submit"
+    @keypress.enter.exact.prevent="handleChange($event)"
   ></v-textarea>
 </template>
 
@@ -24,28 +24,36 @@ import axios from "axios";
 export default {
   name: "PromptComponent",
   data() {
-    return { isLoading: false };
+    return { isLoading: false, isGenerating: false, userQuery: "" };
   },
 
   methods: {
-    async submit() {
-      const prompt_area = document.getElementById("prompt_area");
-      const userInput = prompt_area.value.trim();
-      // prompt_area.value = "";
+    handleChange($event) {
       this.$refs.inputRef.reset();
+      this.userQuery = $event.target.value.trim();
+
+      this.$emit("userQuery", this.userQuery);
+      console.log("userQuery in the handleChange func >>> " + this.userQuery);
+      this.submit($event);
+    },
+
+    async submit() {
+      console.log("userQuery in the submit func >>> " + this.userQuery);
 
       const apiKey = "";
       const endpoint = "https://api.openai.com/v1/chat/completions";
 
-      if (userInput.length > 0) {
+      if (this.userQuery.length > 0) {
         try {
           this.isLoading = true;
+          this.isGenerating = true;
           await axios
             .post(
               endpoint,
               {
                 model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: userInput }],
+                messages: [{ role: "user", content: this.userQuery }],
+                // stream: true,
               },
               {
                 headers: {
@@ -55,14 +63,16 @@ export default {
               }
             )
             .then((response) => {
-              const result = response.data.choices[0].message.content;
-              this.$emit("respResults", { query: userInput, resp: result });
+              const chatResponse = response.data.choices[0].message.content;
+              this.$emit("chatResponse", chatResponse);
+              console.log("chatResponse >>> " + chatResponse);
             });
         } catch (error) {
           console.error("Error : ", error);
         }
       }
       this.isLoading = false;
+      this.isGenerating = false;
     },
   },
 };

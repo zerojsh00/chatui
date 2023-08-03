@@ -10,12 +10,12 @@
             prepend-icon="mdi-account-circle"
           >
             <v-card-text>
-              {{ td.query }}
+              {{ convHist[i].query }}
             </v-card-text>
           </v-card>
           <v-card class="card" prepend-icon="mdi-robot-excited">
             <v-card-text>
-              {{ td.resp }}
+              {{ convHist[i].resp }}
             </v-card-text>
           </v-card>
         </div>
@@ -25,7 +25,7 @@
     <div class="h-100" style="padding: 100px"></div>
 
     <div class="mx-auto w-50 prompt">
-      <Prompt @respResults="pushResult" />
+      <Prompt @userQuery="pushQuery" @chatResponse="pushResponse" />
     </div>
   </v-main>
 </template>
@@ -42,11 +42,11 @@ export default {
     };
   },
   methods: {
-    pushResult(response) {
-      const conv = { query: response.query, resp: response.resp };
-
-      this.convHist.push(conv);
-      console.log(this.convHist);
+    pushQuery(userQuery) {
+      this.convHist.push({ query: userQuery });
+    },
+    pushResponse(response) {
+      this.convHist[convHist.length - 1].resp = response;
     },
   },
 
