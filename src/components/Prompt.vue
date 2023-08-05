@@ -1,30 +1,37 @@
 <template>
-  <v-textarea
-    id="prompt_area"
-    class="h-50 elevation-24"
-    ref="inputRef"
-    prepend-inner-icon="mdi-comment"
-    append-inner-icon="mdi-send-circle"
-    v-bind="{ loading: isLoading, disabled: isGenerating }"
-    clearable
-    clear-icon="mdi-close-circle"
-    variant="solo-filled"
-    rows="1"
-    row-height="1"
-    auto-grow
-    label="메시지를 입력해주세요."
-    model-value="안녕하세요"
-    @keypress.enter.exact.prevent="handleChange($event)"
-  ></v-textarea>
+  <div class="prompt_wrapper">
+    <v-container class="prompt">
+      <v-textarea
+        id="prompt_area"
+        ref="inputRef"
+        prepend-inner-icon="mdi-comment"
+        append-inner-icon="mdi-send-circle"
+        v-bind="{ loading: isLoading, disabled: isGenerating }"
+        clearable
+        clear-icon="mdi-close-circle"
+        variant="solo-filled"
+        rows="1"
+        row-height="1"
+        auto-grow
+        label="Send a message"
+        model-value="안녕하세요"
+        @keypress.enter.exact.prevent="handleChange($event)"
+      ></v-textarea>
+    </v-container>
+  </div>
 </template>
 
 <script>
-import axios from "axios";
+// import axios from "axios";
 
 export default {
   name: "PromptComponent",
   data() {
-    return { isLoading: false, isGenerating: false, userQuery: "" };
+    return {
+      isLoading: false,
+      isGenerating: false,
+      userQuery: "",
+    };
   },
 
   methods: {
@@ -32,45 +39,66 @@ export default {
       this.$refs.inputRef.reset();
       this.userQuery = $event.target.value.trim();
 
-      this.$emit("userQuery", this.userQuery);
-      console.log("userQuery in the handleChange func >>> " + this.userQuery);
-      this.submit($event);
+      if (this.userQuery.length > 0) {
+        this.$emit("userQuery", this.userQuery);
+        console.log("userQuery in the handleChange func >>> " + this.userQuery);
+        this.submit($event);
+      }
     },
 
     async submit() {
       console.log("userQuery in the submit func >>> " + this.userQuery);
 
-      const apiKey = "";
+      const apiKey = "YOUR API KEY";
       const endpoint = "https://api.openai.com/v1/chat/completions";
 
-      if (this.userQuery.length > 0) {
-        try {
-          this.isLoading = true;
-          this.isGenerating = true;
-          await axios
-            .post(
-              endpoint,
-              {
-                model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: this.userQuery }],
-                // stream: true,
-              },
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${apiKey}`,
-                },
-              }
-            )
-            .then((response) => {
-              const chatResponse = response.data.choices[0].message.content;
-              this.$emit("chatResponse", chatResponse);
-              console.log("chatResponse >>> " + chatResponse);
-            });
-        } catch (error) {
-          console.error("Error : ", error);
+      try {
+        this.isLoading = true;
+        this.isGenerating = true;
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: this.userQuery }],
+            stream: true,
+          }),
+        });
+
+        const reader = response.body
+          .pipeThrough(new TextDecoderStream())
+          .getReader();
+
+        let tokens = "";
+        while (true) {
+          var { value, done } = await reader.read();
+          if (done) {
+            break;
+          }
+
+          const chunks = value
+            .replaceAll(/^data: /gm, "")
+            .split("\n")
+            .filter((c) => Boolean(c.length) && c !== "[DONE]")
+            .map((c) => JSON.parse(c));
+
+          for (let chunk of chunks) {
+            const token = chunk.choices[0].delta.content;
+            if (token != undefined) {
+              tokens += token;
+            }
+
+            this.$emit("chatResponse", tokens);
+          }
         }
+      } catch (error) {
+        console.error("Error : ", error);
       }
+
       this.isLoading = false;
       this.isGenerating = false;
     },
@@ -79,9 +107,19 @@ export default {
 </script>
 
 <style>
+.prompt {
+  width: 50%;
+}
+
+.prompt_wrapper {
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+}
+
 #prompt_area {
   resize: none;
-  min-height: 5em;
-  max-height: 50vh;
 }
 </style>

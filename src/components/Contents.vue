@@ -1,8 +1,56 @@
 <template>
-  <v-main class="d-flex align-center flex-column bg-grey-lighten-3">
-    <v-app-bar class="bg-grey-darken-3" title="Cloud GPT"></v-app-bar>
+  <v-main class="d-flex align-center flex-column bg-grey-lighten-4">
+    <v-app-bar
+      v-if="isNewChat == false"
+      class="grey-lighten-5 text-center"
+      title="CloudGPT"
+    ></v-app-bar>
+    <v-container v-if="isNewChat == true"
+      ><div class="info">
+        <div class="text-h3 text-center font-weight-black">CloudGPT</div>
+
+        <v-row no-gutters class="info">
+          <v-col cols="12" sm="4">
+            <div class="text-h5 text-center">Examples</div>
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            >
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            >
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            ></v-col
+          >
+          <v-col cols="12" sm="4">
+            <div class="text-h5 text-center">Examples</div>
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            >
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            >
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            ></v-col
+          >
+          <v-col cols="12" sm="4">
+            <div class="text-h5 text-center">Examples</div>
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            >
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            >
+            <v-sheet class="ma-4 pa-2 rounded text-center"
+              >Remembers what user said earlier in the conversation</v-sheet
+            ></v-col
+          >
+        </v-row>
+      </div></v-container
+    >
     <v-container>
-      <div class="card-group" v-if="convHist.length > 0">
+      <div v-if="convHist.length > 0">
         <div class="mx-auto w-70" v-for="(td, i) in convHist" :key="i">
           <v-card
             class="card"
@@ -22,11 +70,9 @@
       </div>
     </v-container>
 
-    <div class="h-100" style="padding: 100px"></div>
+    <div style="height: 100px"></div>
 
-    <div class="mx-auto w-50 prompt">
-      <Prompt @userQuery="pushQuery" @chatResponse="pushResponse" />
-    </div>
+    <Prompt @userQuery="pushQuery" @chatResponse="pushResponse" />
   </v-main>
 </template>
 
@@ -39,10 +85,17 @@ export default {
   data() {
     return {
       convHist: convHist,
+      isNewChat: true,
     };
+  },
+  created() {
+    this.isNewChat = convHist.length > 0 ? false : true;
   },
   methods: {
     pushQuery(userQuery) {
+      if (this.isNewChat) {
+        this.isNewChat = false;
+      }
       this.convHist.push({ query: userQuery });
     },
     pushResponse(response) {
@@ -56,20 +109,16 @@ export default {
 };
 </script>
 <style scoped>
-.prompt {
-  /* margin: 0px 0px 0px 0px; */
-  height: 10rem;
-  position: fixed;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-}
 .card {
   margin: 10px 0px 10px 0px;
 }
 
-/* .card-group {
-  height: calc(100vh - 300px);
-  overflow-y: scroll;
-} */
+.v-container {
+  width: 70%;
+}
+
+.info {
+  margin-top: 60px;
+  overflow: hidden;
+}
 </style>

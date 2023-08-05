@@ -13,6 +13,7 @@ import Contents from "@/components/Contents.vue";
 
 export default {
   name: "App",
+  compatConfig: { MODE: 3 },
 
   components: {
     Contents,
