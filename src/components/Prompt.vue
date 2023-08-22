@@ -14,7 +14,7 @@
         row-height="1"
         auto-grow
         label="Send a message"
-        model-value="안녕하세요"
+        model-value="repeat after me, Hello World !"
         @keypress.enter.exact.prevent="handleChange($event)"
       ></v-textarea>
     </v-container>
@@ -22,8 +22,6 @@
 </template>
 
 <script>
-// import axios from "axios";
-
 export default {
   name: "PromptComponent",
   data() {
@@ -41,31 +39,22 @@ export default {
 
       if (this.userQuery.length > 0) {
         this.$emit("userQuery", this.userQuery);
-        console.log("userQuery in the handleChange func >>> " + this.userQuery);
         this.submit($event);
       }
     },
 
     async submit() {
-      console.log("userQuery in the submit func >>> " + this.userQuery);
-
-      const apiKey = "YOUR API KEY";
-      const endpoint = "https://api.openai.com/v1/chat/completions";
-
       try {
         this.isLoading = true;
         this.isGenerating = true;
 
-        const response = await fetch(endpoint, {
+        const response = await fetch("/chat/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: this.userQuery }],
-            stream: true,
+            content: this.userQuery,
           }),
         });
 
@@ -74,26 +63,18 @@ export default {
           .getReader();
 
         let tokens = "";
+
         while (true) {
           var { value, done } = await reader.read();
+
           if (done) {
             break;
           }
+          console.log(value);
 
-          const chunks = value
-            .replaceAll(/^data: /gm, "")
-            .split("\n")
-            .filter((c) => Boolean(c.length) && c !== "[DONE]")
-            .map((c) => JSON.parse(c));
+          tokens += value;
 
-          for (let chunk of chunks) {
-            const token = chunk.choices[0].delta.content;
-            if (token != undefined) {
-              tokens += token;
-            }
-
-            this.$emit("chatResponse", tokens);
-          }
+          this.$emit("chatResponse", tokens);
         }
       } catch (error) {
         console.error("Error : ", error);
